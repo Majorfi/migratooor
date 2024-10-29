@@ -1,10 +1,10 @@
 import React, {Fragment, useEffect, useMemo, useState} from 'react';
 import Image from 'next/image';
-import {usePublicClient} from 'wagmi';
+import assert from 'assert';
+import {useConnect, usePublicClient} from 'wagmi';
 import {Listbox, Transition} from '@headlessui/react';
 import {useAccountModal, useChainModal} from '@rainbow-me/rainbowkit';
 import {useIsMounted} from '@react-hookz/web';
-import {SUPPORTED_SMOL_CHAINS} from '@utils/constants';
 import {useWeb3} from '@yearn-finance/web-lib/contexts/useWeb3';
 import {toSafeChainID} from '@yearn-finance/web-lib/hooks/useChainID';
 import {IconChevronBottom} from '@yearn-finance/web-lib/icons/IconChevronBottom';
@@ -40,7 +40,17 @@ function NetworkButton({
 	);
 }
 
-function CurrentNetworkButton({label, value, isOpen}: {label: string; value: number; isOpen: boolean}): ReactElement {
+function CurrentNetworkButton({
+	label,
+	value,
+	isOpen,
+	fullWidth
+}: {
+	label: string;
+	value: number;
+	isOpen: boolean;
+	fullWidth?: boolean;
+}): ReactElement {
 	const [src, set_src] = useState<string | undefined>(undefined);
 
 	useEffect((): void => {
@@ -52,7 +62,10 @@ function CurrentNetworkButton({label, value, isOpen}: {label: string; value: num
 	return (
 		<Listbox.Button
 			suppressHydrationWarning
-			className={'yearn--header-nav-item flex flex-row items-center border-0 p-0 text-xs md:flex md:text-sm'}>
+			className={
+				'yearn--header-nav-item flex flex-row items-center  border-0 p-0 text-xs md:flex md:text-sm ' +
+				(fullWidth ? ' justify-between w-full ' : '')
+			}>
 			<div
 				suppressHydrationWarning
 				className={'relative flex flex-row items-center truncate whitespace-nowrap text-xs md:text-sm'}>
@@ -73,7 +86,7 @@ function CurrentNetworkButton({label, value, isOpen}: {label: string; value: num
 			</div>
 			<div className={'ml-1 md:ml-2'}>
 				<IconChevronBottom
-					className={`size-3 transition-transform md:h-5 md:w-4${isOpen ? '-rotate-180' : 'rotate-0'}`}
+					className={`h-3 w-3 transition-transform md:h-5 md:w-4 ${isOpen ? '-rotate-180' : 'rotate-0'}`}
 				/>
 			</div>
 		</Listbox.Button>
@@ -81,18 +94,25 @@ function CurrentNetworkButton({label, value, isOpen}: {label: string; value: num
 }
 
 type TNetwork = {value: number; label: string};
-export function NetworkSelector({networks}: {networks: number[]}): ReactElement {
+export function NetworkSelector({networks, fullWidth}: {networks: number[]; fullWidth?: boolean}): ReactElement {
 	const {onSwitchChain} = useWeb3();
 	const publicClient = usePublicClient();
+	const {connectors} = useConnect();
 	const safeChainID = toSafeChainID(publicClient?.chain.id, Number(process.env.BASE_CHAINID));
 	const isMounted = useIsMounted();
 
 	const supportedNetworks = useMemo((): TNetwork[] => {
-		return SUPPORTED_SMOL_CHAINS.filter(
-			({id}): boolean =>
-				![5, 1337, 84531].includes(id) && ((networks.length > 0 && networks.includes(id)) || true)
-		).map((network: Chain): TNetwork => ({value: network.id, label: network.name}));
-	}, [networks]);
+		const injectedConnector = connectors.find((e): boolean => e.id.toLocaleLowerCase() === 'injected');
+		assert(injectedConnector, 'No injected connector found');
+		const chainsForInjected = injectedConnector.chains;
+
+		return chainsForInjected
+			.filter(
+				({id}): boolean =>
+					![5, 1337, 84531].includes(id) && ((networks.length > 0 && networks.includes(id)) || true)
+			)
+			.map((network: Chain): TNetwork => ({value: network.id, label: network.name}));
+	}, [connectors, networks]);
 
 	const currentNetwork = useMemo(
 		(): TNetwork | undefined => supportedNetworks.find((network): boolean => network.value === safeChainID),
@@ -131,7 +151,7 @@ export function NetworkSelector({networks}: {networks: number[]}): ReactElement 
 	}
 
 	return (
-		<div className={'relative z-50 mr-4'}>
+		<div className={'relative z-50 ' + (!fullWidth ? ' mr-4' : ' w-full')}>
 			<Listbox
 				value={safeChainID}
 				onChange={(value: unknown): void => onSwitchChain((value as {value: number}).value)}>
@@ -141,6 +161,7 @@ export function NetworkSelector({networks}: {networks: number[]}): ReactElement 
 							label={currentNetwork?.label || 'Ethereum'}
 							value={currentNetwork?.value || 1}
 							isOpen={open}
+							fullWidth={fullWidth}
 						/>
 						<Transition
 							appear
@@ -167,11 +188,13 @@ export function NetworkSelector({networks}: {networks: number[]}): ReactElement 
 									leaveTo={'transform scale-95 opacity-0'}>
 									<Listbox.Options
 										className={
-											'absolute -inset-x-24 z-50 flex items-center justify-center pt-2 transition-opacity'
+											'absolute  z-50 flex items-center justify-center pt-2 opacity-0 transition-opacity ' +
+											(fullWidth ? ' -inset-x-4 ' : ' -inset-x-24 ')
 										}>
 										<div
 											className={
-												'w-fit border border-neutral-300 bg-neutral-100 p-1 px-2 text-center text-xxs text-neutral-900'
+												' border border-neutral-300 bg-neutral-100 p-1 px-2 text-center text-xxs text-neutral-900 ' +
+												(fullWidth ? ' w-full ' : ' w-fit ')
 											}>
 											{supportedNetworks.map(
 												(network): ReactElement => (
@@ -243,7 +266,7 @@ export function WalletSelector(): ReactElement {
 					walletIdentity
 				) : (
 					<span>
-						<IconWallet className={'yearn--header-nav-item mt-0.5 block size-4 md:hidden'} />
+						<IconWallet className={'yearn--header-nav-item mt-0.5 block h-4 w-4 md:hidden'} />
 						<span
 							className={
 								'relative hidden h-8 cursor-pointer items-center justify-center !rounded-md border border-transparent bg-neutral-900 px-2 text-xs font-normal text-neutral-0 transition-all hover:bg-neutral-800 md:flex'

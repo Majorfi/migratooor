@@ -6,6 +6,7 @@ import {LogoTokenAssets} from '@icons/LogoTokenAssets';
 import LogoTokenlistooor from '@icons/LogoTokenListooor';
 import LogoMigratooor from '@migratooor/Logo';
 import LogoNFTMigratooor from '@nftmigratooor/Logo';
+import LogoPeanutCreator from '@peanut/create/Logo';
 import LogoSafeCreator from '@safeCreatooor/Logo';
 import LogoStream from '@stream/Logo';
 import {Button} from '@yearn-finance/web-lib/components/Button';
@@ -13,6 +14,20 @@ import {Button} from '@yearn-finance/web-lib/components/Button';
 import type {ReactElement} from 'react';
 
 const apps = [
+	{
+		href: '/peanut',
+		title: 'Peanut Protocol',
+		description: (
+			<span>
+				{'Send tokens to anyone, with a '}
+				<span className={'font-semibold text-primary-500 transition-colors group-hover:text-primary-0'}>
+					{'link'}
+				</span>
+				{'.'}
+			</span>
+		),
+		icon: <LogoPeanutCreator className={'h-[80px] w-[80px]'} />
+	},
 	{
 		href: '/safe',
 		title: 'MultiSafe',

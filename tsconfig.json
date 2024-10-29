@@ -9,6 +9,7 @@
 			"@migratooor/*": ["components/apps/migratooor/*"],
 			"@nftmigratooor/*": ["components/apps/nftmigratooor/*"],
 			"@safeCreatooor/*": ["components/apps/safeCreator/*"],
+			"@peanut/*": ["components/apps/peanut/*"],
 			"@stream/*": ["components/apps/stream/*"],
 			"@utils/*": ["utils/*"]
 		},
